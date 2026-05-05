@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickfarrow/tauri-docs/refs/heads/main/src/content/gen/tauri-v2-schema.json",
+  "productName": "DeepSeek",
+  "version": "1.0.0",
+  "identifier": "com.deepseek.desktop",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Productivity",
+    "shortDescription": "DeepSeek Chat",
+    "longDescription": "A lightweight desktop wrapper for DeepSeek AI chat."
+  }
+}
