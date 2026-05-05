@@ -207,6 +207,17 @@ pub fn run() {
                     Some("CmdOrCtrl+0"),
                 )?;
 
+                let edit_menu = Submenu::with_items(app, "Edit", true, &[
+                    &PredefinedMenuItem::undo(app, None::<&str>)?,
+                    &PredefinedMenuItem::redo(app, None::<&str>)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::cut(app, None::<&str>)?,
+                    &PredefinedMenuItem::copy(app, None::<&str>)?,
+                    &PredefinedMenuItem::paste(app, None::<&str>)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::select_all(app, None::<&str>)?,
+                ])?;
+
                 let view_menu = Submenu::with_items(app, "View", true, &[
                     &zoom_in,
                     &zoom_out,
@@ -236,6 +247,7 @@ pub fn run() {
 
                 app.set_menu(Menu::with_items(app, &[
                     &app_menu,
+                    &edit_menu,
                     &view_menu,
                     &window_menu,
                 ])?)?;
