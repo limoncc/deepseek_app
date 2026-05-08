@@ -119,6 +119,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![report_theme])
         .on_menu_event(move |app, event| {
             if let Some(window) = app.get_webview_window("main") {
