@@ -36,11 +36,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Build macOS app (${{ matrix.target }})
-        run: npx tauri build --target ${{ matrix.target }}
+      - name: Build macOS app (${{ matrix.artifact }})
+        run: npx tauri build
 
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
