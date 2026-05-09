@@ -312,10 +312,10 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app, event| {
+        .run(|_app, _event| {
             #[cfg(target_os = "macos")]
-            if let RunEvent::Reopen { .. } = event {
-                if let Some(w) = app.get_webview_window("main") {
+            if let RunEvent::Reopen { .. } = _event {
+                if let Some(w) = _app.get_webview_window("main") {
                     let _ = w.show();
                     let _ = w.set_focus();
                 }
