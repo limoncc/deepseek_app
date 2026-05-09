@@ -1,11 +1,12 @@
-use std::sync::{atomic::{AtomicU32, Ordering}, Arc};
+use std::sync::{
+    atomic::{AtomicU32, Ordering},
+    Arc,
+};
 use tauri::{
-    menu::{
-        Menu, MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem, Submenu,
-    },
+    menu::{Menu, MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     window::{Color, Effect, EffectState, EffectsBuilder},
-    Listener, Manager, WebviewWindowBuilder, WebviewUrl,
+    Listener, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder,
 };
 
 // Injected into every page load. Detects light/dark theme from <html> and <body>,
@@ -87,8 +88,7 @@ fn apply_window_theme(window: &tauri::WebviewWindow, theme: &str) {
                         .color(Color(0, 0, 0, 255))
                         .build(),
                 );
-                let appearance =
-                    unsafe { NSAppearance::appearanceNamed(NSAppearanceNameDarkAqua) };
+                let appearance = unsafe { NSAppearance::appearanceNamed(NSAppearanceNameDarkAqua) };
                 if let Some(ref a) = appearance {
                     NSApp(mtm).setAppearance(Some(a));
                 }
@@ -130,10 +130,7 @@ pub fn run() {
                         let _ = window.set_zoom(new as f64 / 100.0);
                     }
                     "zoom_out" => {
-                        let new = (zoom_level
-                            .load(Ordering::Relaxed)
-                            .saturating_sub(10))
-                        .max(25);
+                        let new = (zoom_level.load(Ordering::Relaxed).saturating_sub(10)).max(25);
                         zoom_level.store(new, Ordering::Relaxed);
                         let _ = window.set_zoom(new as f64 / 100.0);
                     }
@@ -151,13 +148,11 @@ pub fn run() {
             let window = WebviewWindowBuilder::new(
                 app,
                 "main",
-                WebviewUrl::External(
-                    "https://chat.deepseek.com".parse().expect("invalid URL"),
-                ),
+                WebviewUrl::External("https://chat.deepseek.com".parse().expect("invalid URL")),
             )
             .title("DeepSeek")
             .inner_size(1200.0, 800.0)
-            .min_inner_size(800.0, 600.0)
+            .min_inner_size(400.0, 300.0)
             .hidden_title(true)
             .title_bar_style(tauri::TitleBarStyle::Transparent)
             .resizable(true)
@@ -186,72 +181,75 @@ pub fn run() {
             // --- App menu bar (macOS) ---
             #[cfg(target_os = "macos")]
             {
-                let zoom_in = MenuItem::with_id(
+                let zoom_in =
+                    MenuItem::with_id(app, "zoom_in", "Zoom In", true, Some("CmdOrCtrl+="))?;
+                let zoom_out =
+                    MenuItem::with_id(app, "zoom_out", "Zoom Out", true, Some("CmdOrCtrl+-"))?;
+                let zoom_reset =
+                    MenuItem::with_id(app, "zoom_reset", "Actual Size", true, Some("CmdOrCtrl+0"))?;
+
+                let edit_menu = Submenu::with_items(
                     app,
-                    "zoom_in",
-                    "Zoom In",
+                    "Edit",
                     true,
-                    Some("CmdOrCtrl+="),
+                    &[
+                        &PredefinedMenuItem::undo(app, None::<&str>)?,
+                        &PredefinedMenuItem::redo(app, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::cut(app, None::<&str>)?,
+                        &PredefinedMenuItem::copy(app, None::<&str>)?,
+                        &PredefinedMenuItem::paste(app, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::select_all(app, None::<&str>)?,
+                    ],
                 )?;
-                let zoom_out = MenuItem::with_id(
+
+                let view_menu = Submenu::with_items(
                     app,
-                    "zoom_out",
-                    "Zoom Out",
+                    "View",
                     true,
-                    Some("CmdOrCtrl+-"),
+                    &[
+                        &zoom_in,
+                        &zoom_out,
+                        &PredefinedMenuItem::separator(app)?,
+                        &zoom_reset,
+                    ],
                 )?;
-                let zoom_reset = MenuItem::with_id(
+
+                let app_menu = Submenu::with_items(
                     app,
-                    "zoom_reset",
-                    "Actual Size",
+                    "DeepSeek",
                     true,
-                    Some("CmdOrCtrl+0"),
+                    &[
+                        &PredefinedMenuItem::about(app, Some("About DeepSeek"), None)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::services(app, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::hide(app, None::<&str>)?,
+                        &PredefinedMenuItem::hide_others(app, None::<&str>)?,
+                        &PredefinedMenuItem::show_all(app, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::quit(app, None::<&str>)?,
+                    ],
                 )?;
 
-                let edit_menu = Submenu::with_items(app, "Edit", true, &[
-                    &PredefinedMenuItem::undo(app, None::<&str>)?,
-                    &PredefinedMenuItem::redo(app, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::cut(app, None::<&str>)?,
-                    &PredefinedMenuItem::copy(app, None::<&str>)?,
-                    &PredefinedMenuItem::paste(app, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::select_all(app, None::<&str>)?,
-                ])?;
+                let window_menu = Submenu::with_items(
+                    app,
+                    "Window",
+                    true,
+                    &[
+                        &PredefinedMenuItem::minimize(app, None::<&str>)?,
+                        &PredefinedMenuItem::fullscreen(app, None::<&str>)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::close_window(app, None::<&str>)?,
+                        &PredefinedMenuItem::bring_all_to_front(app, None::<&str>)?,
+                    ],
+                )?;
 
-                let view_menu = Submenu::with_items(app, "View", true, &[
-                    &zoom_in,
-                    &zoom_out,
-                    &PredefinedMenuItem::separator(app)?,
-                    &zoom_reset,
-                ])?;
-
-                let app_menu = Submenu::with_items(app, "DeepSeek", true, &[
-                    &PredefinedMenuItem::about(app, Some("About DeepSeek"), None)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::services(app, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::hide(app, None::<&str>)?,
-                    &PredefinedMenuItem::hide_others(app, None::<&str>)?,
-                    &PredefinedMenuItem::show_all(app, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::quit(app, None::<&str>)?,
-                ])?;
-
-                let window_menu = Submenu::with_items(app, "Window", true, &[
-                    &PredefinedMenuItem::minimize(app, None::<&str>)?,
-                    &PredefinedMenuItem::fullscreen(app, None::<&str>)?,
-                    &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::close_window(app, None::<&str>)?,
-                    &PredefinedMenuItem::bring_all_to_front(app, None::<&str>)?,
-                ])?;
-
-                app.set_menu(Menu::with_items(app, &[
-                    &app_menu,
-                    &edit_menu,
-                    &view_menu,
-                    &window_menu,
-                ])?)?;
+                app.set_menu(Menu::with_items(
+                    app,
+                    &[&app_menu, &edit_menu, &view_menu, &window_menu],
+                )?)?;
             }
 
             // --- System tray ---
@@ -302,6 +300,15 @@ pub fn run() {
                 api.prevent_close();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            #[cfg(target_os = "macos")]
+            if let RunEvent::Reopen { .. } = event {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+        });
 }
