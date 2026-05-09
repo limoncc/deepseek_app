@@ -166,6 +166,7 @@ pub fn run() {
                 .title_bar_style(tauri::TitleBarStyle::Transparent);
             let window = window
             .resizable(true)
+            .zoom_hotkeys_enabled(true)
             .initialization_script(THEME_DETECT_SCRIPT)
             .build()?;
 
