@@ -161,9 +161,10 @@ pub fn run() {
             .inner_size(1200.0, 800.0)
             .min_inner_size(400.0, 300.0);
             #[cfg(target_os = "macos")]
-            let window = window.hidden_title(true);
             let window = window
-            .title_bar_style(tauri::TitleBarStyle::Transparent)
+                .hidden_title(true)
+                .title_bar_style(tauri::TitleBarStyle::Transparent);
+            let window = window
             .resizable(true)
             .initialization_script(THEME_DETECT_SCRIPT)
             .build()?;
