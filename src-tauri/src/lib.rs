@@ -3,11 +3,17 @@ use std::sync::{
     Arc,
 };
 use tauri::{
-    menu::{Menu, MenuBuilder, MenuItem, MenuItemBuilder, PredefinedMenuItem, Submenu},
+    menu::{MenuBuilder, MenuItemBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    window::{Color, Effect, EffectState, EffectsBuilder},
-    Listener, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder,
+    Listener, Manager, WebviewUrl, WebviewWindowBuilder,
 };
+
+#[cfg(target_os = "macos")]
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+#[cfg(target_os = "macos")]
+use tauri::window::{Color, Effect, EffectState, EffectsBuilder};
+#[cfg(target_os = "macos")]
+use tauri::RunEvent;
 
 // Injected into every page load. Detects light/dark theme from <html> and <body>,
 // then reports it to Rust via Tauri's IPC bridge.
@@ -70,6 +76,7 @@ fn report_theme(window: tauri::WebviewWindow, theme: String) {
 }
 
 /// Update the macOS window chrome to match the web page's theme.
+#[cfg_attr(not(target_os = "macos"), allow(unused_variables))]
 fn apply_window_theme(window: &tauri::WebviewWindow, theme: &str) {
     #[cfg(target_os = "macos")]
     {
@@ -152,8 +159,10 @@ pub fn run() {
             )
             .title("DeepSeek")
             .inner_size(1200.0, 800.0)
-            .min_inner_size(400.0, 300.0)
-            .hidden_title(true)
+            .min_inner_size(400.0, 300.0);
+            #[cfg(target_os = "macos")]
+            let window = window.hidden_title(true);
+            let window = window
             .title_bar_style(tauri::TitleBarStyle::Transparent)
             .resizable(true)
             .initialization_script(THEME_DETECT_SCRIPT)
